@@ -11,6 +11,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool choolCheckDone = false;
+  GoogleMapController? mapController;
 
   static final LatLng companyLatLng = LatLng(
     37.5233273,
@@ -99,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? withinDistanceCircle
                                 : notWithinDistanceCircle,
                         marker: marker,
+                        onMapCreated: onMapCreated,
                       ),
                       _ChoolCheckButton(
                         isWithinRange: isWithinRange,
@@ -116,6 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  onMapCreated(GoogleMapController controller) {
+    mapController = controller;
   }
 
   onChoolCheckPressed() async {
@@ -182,6 +188,27 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       backgroundColor: Colors.white,
+      actions: [
+        IconButton(
+          onPressed: () async {
+            if (mapController == null) {
+              return;
+            }
+
+            final location = await Geolocator.getCurrentPosition();
+
+            mapController!.animateCamera(
+              CameraUpdate.newLatLng(
+                LatLng(location.latitude, location.longitude),
+              ),
+            );
+          },
+          icon: Icon(
+            Icons.my_location,
+            color: Colors.blue,
+          ),
+        )
+      ],
     );
   }
 }
@@ -190,12 +217,14 @@ class _CustomGoogleMap extends StatelessWidget {
   final CameraPosition initialPosition;
   final Circle circle;
   final Marker marker;
+  final MapCreatedCallback onMapCreated;
 
   const _CustomGoogleMap({
     Key? key,
     required this.initialPosition,
     required this.circle,
     required this.marker,
+    required this.onMapCreated,
   }) : super(key: key);
 
   @override
@@ -207,6 +236,7 @@ class _CustomGoogleMap extends StatelessWidget {
         initialCameraPosition: initialPosition,
         myLocationEnabled: true,
         myLocationButtonEnabled: false,
+        onMapCreated: onMapCreated,
         circles: Set.from(
           [
             circle,
